@@ -17,11 +17,9 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptException;
-//import org.bitcoinj.wallet.DefaultRiskAnalysis;
+import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
@@ -266,6 +264,15 @@ public class TransactionInput extends ChildMessage {
         return value;
     }
 
+    /**
+     * Sets the value of this input.
+     */
+    public void setValue(Coin value) {
+        checkNotNull(value);
+        unCache();
+        this.value = value;
+    }
+
     public enum ConnectionResult {
         NO_SUCH_TX,
         ALREADY_SPENT,
@@ -458,10 +465,6 @@ public class TransactionInput extends ChildMessage {
         return new TransactionInput(params, null, bitcoinSerialize(), 0);
     }
 
-
-    // TODO: Might be able to delete isStandard since not used (DefaultRiskAnalysis -> Wallet)
-    //  Or else could pull the needed code because essentially just uses the enum data.
-    //  Pulled the code below and modified to not use DefaultRiskAnalysis class.
     /**
      * <p>Returns either RuleViolation.NONE if the input is standard, or which rule makes it non-standard if so.
      * The "IsStandard" rules control whether the default Bitcoin Core client blocks relay of a tx / refuses to mine it,
@@ -469,44 +472,8 @@ public class TransactionInput extends ChildMessage {
      *
      * <p>This method simply calls <tt>DefaultRiskAnalysis.isInputStandard(this)</tt>.</p>
      */
-    public RuleViolation isStandard() {
-        return isInputStandard(this);
-    }
-
-    public static RuleViolation isInputStandard(TransactionInput input) {
-        for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
-            if (chunk.data != null && !chunk.isShortestPossiblePushData())
-                return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
-            if (chunk.isPushData()) {
-                ECKey.ECDSASignature signature;
-                try {
-                    signature = ECKey.ECDSASignature.decodeFromDER(chunk.data);
-                } catch (RuntimeException x) {
-                    // Doesn't look like a signature.
-                    signature = null;
-                }
-                if (signature != null) {
-                    if (!TransactionSignature.isEncodingCanonical(chunk.data))
-                        return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
-                    if (!signature.isCanonical())
-                        return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
-                }
-            }
-        }
-        return RuleViolation.NONE;
-    }
-
-    /**
-     * The reason a transaction is considered non-standard, returned by
-     * {@link #isStandard}.
-     */
-    public enum RuleViolation {
-        NONE,
-        VERSION,
-        DUST,
-        SHORTEST_POSSIBLE_PUSHDATA,
-        NONEMPTY_STACK, // Not yet implemented (for post 0.12)
-        SIGNATURE_CANONICAL_ENCODING
+    public DefaultRiskAnalysis.RuleViolation isStandard() {
+        return DefaultRiskAnalysis.isInputStandard(this);
     }
 
     @Override
