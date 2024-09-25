@@ -23,9 +23,9 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptOpCodes;
-import org.bitcoinj.signers.TransactionSigner;
+//import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.Wallet;
+//import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
 import com.google.common.collect.ImmutableMap;
@@ -726,16 +726,15 @@ public class Transaction extends ChildMessage {
         return getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
     }
 
-    @Override
-    public String toString() {
-        return toString(null);
-    }
+    // TODO: VERIFY IF OKAY
+    //  Modified toString() to not use AbstractBlockChain since never used (AbstractBlockChain -> Wallet)
+    //  Often used for Logging but without AbstractBlockChain (null) so modified toString() to not use it.
 
     /**
      * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
-     * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
-    public String toString(@Nullable AbstractBlockChain chain) {
+    @Override
+    public String toString() {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(getHashAsString()).append('\n');
         if (updatedAt != null)
@@ -746,10 +745,6 @@ public class Transaction extends ChildMessage {
             s.append("  time locked until ");
             if (lockTime < LOCKTIME_THRESHOLD) {
                 s.append("block ").append(lockTime);
-                if (chain != null) {
-                    s.append(" (estimated to be reached at ")
-                            .append(Utils.dateTimeFormat(chain.estimateBlockTime((int) lockTime))).append(')');
-                }
             } else {
                 s.append(Utils.dateTimeFormat(lockTime * 1000));
             }
@@ -1749,16 +1744,19 @@ public class Transaction extends ChildMessage {
         return time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds) || !isTimeLocked();
     }
 
+    // TODO: Might be able to delete estimateLockTime() (Uses AbstractBlockChain -> Wallet)
+    //  Only used for 1 Test (TransactionTest.java 154)
+    //  Or else might be able to pull code for estimateBlockTime() or prune AbstractBlockchain.java
     /**
      * Returns either the lock time as a date, if it was specified in seconds, or an estimate based on the time in
      * the current head block if it was specified as a block time.
      */
-    public Date estimateLockTime(AbstractBlockChain chain) {
-        if (lockTime < LOCKTIME_THRESHOLD)
-            return chain.estimateBlockTime((int)getLockTime());
-        else
-            return new Date(getLockTime()*1000);
-    }
+//    public Date estimateLockTime(AbstractBlockChain chain) {
+//        if (lockTime < LOCKTIME_THRESHOLD)
+//            return chain.estimateBlockTime((int)getLockTime());
+//        else
+//            return new Date(getLockTime()*1000);
+//    }
 
     /**
      * Returns the purpose for which this transaction was created. See the javadoc for {@link Purpose} for more

@@ -1,5 +1,3 @@
-# WARNING: MAY NOT BE UP TO DATE
-
 [![](https://jitpack.io/v/io.samourai.code.wallet/bitcoinj.svg)](https://jitpack.io/#io.samourai.code.wallet/bitcoinj)
 
 ### Welcome to bitcoinj
